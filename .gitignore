@@ -1,0 +1,32 @@
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Build results
+[Dd]ebug/
+[Dd]ebug_*/
+[Rr]elease/
+[Xx]64/
+[Xx]86/
+[Bb]uild/
+[Bb]in*/
+[Oo]bj/
+build*
+.vscode/
+output/
+__pycache__/
+packages/
+
+# Visual C++ cache files
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.*

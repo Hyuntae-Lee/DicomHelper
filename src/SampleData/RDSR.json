@@ -1,0 +1,42 @@
+{
+    "SpecificCharacterSet" : "ISO_IR 100",
+    "SOPClassUID" : "1.2.840.10008.5.1.4.1.1.88.67",
+    "SOPInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.99",
+    "StudyInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.999",
+    "SeriesInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.9999",
+    "Modality" : "SR",
+    "SeriesNumber" : 1,
+    "InstanceNumber" : 1,
+    "PatientName" : "DOE^JOHN",
+    "PatientID" : "P123456",
+    "PatientBirthDate" : "19700101",
+    "PatientSex" : "M",
+    "StudyDate" : "19970302",
+    "StudyTime" : "163759",
+    "AccessionNumber" : "A-0001",
+    "StudyDescription" : "CT Chest Routine",
+
+    "RDSRRoot" : {
+        "Meaning" : "X-Ray Radiation Dose Report",
+
+        "manufacturer" : "AcmeCT",
+        "modelName" : "Model123",
+        "deviceSerialNumber" : "SN-987654",
+        "softwareVersions" : "v1.2.3",
+        "stationName" : "CT1",
+
+        "AccumulatedDose" : {
+            "DLP" : {
+                "Value" : 350.0,
+                "Unit" : "mGy.cm"
+            },
+
+            "CTDIvol" : {
+                "Value" : 10.5,
+                "Unit" : "mGy"
+            }
+        }
+    },
+
+    
+}
