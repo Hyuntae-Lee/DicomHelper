@@ -4,217 +4,374 @@ using FellowOakDicom;
 
 namespace DicomHelper
 {
-    public class ScanData
+    using System;
+    using FellowOakDicom;
+    using System.Collections.Generic;
+
+    public static class CustomDicomTags
     {
-        public double Kvp;
-        public double MA;
-        public double ExposureTimeMs;
-        public double CTDIvol;
-        public double DLP;
-        public string Region; // e.g., "Chest"
+        public static readonly DicomTag AcquisitionTypeCodeSequence = new DicomTag(0x0040, 0x0254);
+        public static readonly DicomTag ExposureModulationType = new DicomTag(0x0018, 0x9323);
+        public static readonly DicomTag DLP = new DicomTag(0x0018, 0x9332);
+        public static readonly DicomTag DAP = new DicomTag(0x0018, 0x115E);
+        public static readonly DicomTag CTDIvol = new DicomTag(0x0018, 0x9345);
     }
 
-    class RdsrBuilder
+    class RDSRBuilder
     {
-        public static DicomFile CreateXr29CtRdsr(ScanData scout, ScanData upper, ScanData lower)
+        public PatientInfo_t PatientInfo { get { return _patientInfo; } }
+        private PatientInfo_t _patientInfo;
+        public ProductInfo_t ProductInfo { get { return _productInfo; } }
+        private ProductInfo_t _productInfo;
+        public DoseInfo_t DoseInfo { get { return _doseInfo_t; } }
+        private DoseInfo_t _doseInfo_t;
+
+        public RDSRBuilder()
+        {
+            _patientInfo = new PatientInfo_t();
+            _productInfo = new ProductInfo_t();
+            _doseInfo_t = new DoseInfo_t();
+        }
+
+        public DicomDataset BuildRDSR()
         {
             var ds = new DicomDataset();
 
-            // 1. Header
+            // Header
             // - Common
-            ds.Add(DicomTag.SpecificCharacterSet, "ISO_IR 100");
-            // - SOP
-            ds.Add(DicomTag.SOPClassUID, "1.2.840.10008.5.1.4.1.1.88.67"); // Radiation Dose SR Storage
-            ds.Add(DicomTag.SOPInstanceUID, DicomUID.Generate().UID);
+            ds.Add(DicomTag.SOPClassUID, DicomUID.XRayRadiationDoseSRStorage.UID);
+            ds.Add(DicomTag.SOPInstanceUID, ProductInfo.SOPInstanceUID);
+            ds.Add(DicomTag.StudyInstanceUID, ProductInfo.StudyInstanceUID);
+            ds.Add(DicomTag.SeriesInstanceUID, ProductInfo.SeriesInstanceUID);
             ds.Add(DicomTag.Modality, "SR");
+            ds.Add(DicomTag.InstanceCreationDate, DateTime.UtcNow.ToString("yyyyMMdd")); // by current
+            ds.Add(DicomTag.InstanceCreationTime, DateTime.UtcNow.ToString("HHmmss")); // by current
+            //"ISO_IR 192"
             // - Patient
-            ds.Add(DicomTag.PatientName, "Test^Patient");
-            ds.Add(DicomTag.PatientID, "12345");
-            ds.Add(DicomTag.PatientBirthDate, "19700101");
-            ds.Add(DicomTag.PatientSex, "M");
+            ds.Add(DicomTag.PatientName, PatientInfo.Name);
+            ds.Add(DicomTag.PatientID, PatientInfo.ID);
+            ds.Add(DicomTag.PatientAge, PatientInfo.Age.ToString("D3") + "Y");
+            ds.Add(DicomTag.PatientSex, PatientInfo.Gender);
+            ds.Add(DicomTag.PatientBirthDate, PatientInfo.BirthDate);
             // - Product
-            ds.Add(DicomTag.Manufacturer, "MyCompany");
-            ds.Add(DicomTag.ManufacturerModelName, "ModelX");
-            ds.Add(DicomTag.DeviceSerialNumber, "123456");
-            ds.Add(DicomTag.SoftwareVersions, "1.0.0");
-            // - Study
-            ds.Add(DicomTag.StudyInstanceUID, DicomUID.Generate().UID);
-            ds.Add(DicomTag.StudyID, "1");
-            // - Series
-            ds.Add(DicomTag.SeriesInstanceUID, DicomUID.Generate().UID);
-            ds.Add(DicomTag.SeriesNumber, "1");
-            ds.Add(DicomTag.InstanceNumber, "1");
-
-            // 2. RDSR
-            var rootSeq = new DicomSequence(DicomTag.ContentSequence);
-            var rootItem = new DicomDataset();
-            rootItem.Add(DicomTag.ValueType, "CONTAINER");
-            rootItem.Add(new DicomSequence(DicomTag.ConceptNameCodeSequence, CreateCode("113701", "DCM", "Radiation Dose Report")));
-            rootItem.Add(DicomTag.ContinuityOfContent, "SEPARATE");
-
-            // - Root ContentSequence
-            var contentSeq = new DicomSequence(DicomTag.ContentSequence);
-            // - Irration Event
+            ds.Add(DicomTag.Manufacturer, ProductInfo.Manufacturer);
+            ds.Add(DicomTag.ManufacturerModelName, ProductInfo.ModelName);
+            ds.Add(DicomTag.InstitutionName, ProductInfo.InstitutionName);
+            ds.Add(DicomTag.InstitutionAddress, ProductInfo.InstitutionAddress);
+            ds.Add(DicomTag.StationName, ProductInfo.StationName);
+            ds.Add(DicomTag.DeviceSerialNumber, ProductInfo.DeviceSerialNumber);
+            ds.Add(DicomTag.SoftwareVersions, ProductInfo.SoftwareVersion);
+            
+            // ProtocolName including Pediatric
+            if (PatientInfo.Pediatric)
             {
-                // : Sample Scout (Localizer) Event ---
-                contentSeq.Items.Add(CreateIrradiationEvent("LOCALIZER", "Localizer", scout));
-
-                // : Sample  CT 1
-                contentSeq.Items.Add(CreateIrradiationEvent("113822", "CT Acquisition", upper));
-
-                // : Sample  CT 2
-                contentSeq.Items.Add(CreateIrradiationEvent("113822", "CT Acquisition", lower));
+                ds.AddOrUpdate(DicomTag.ProtocolName, "Pediatric Chest Low Dose");
+            }
+            else
+            {
+                ds.AddOrUpdate(DicomTag.ProtocolName, "Adult Abdomen Standard");
             }
 
-            // - Accumlated Dose
-            contentSeq.Items.Add(CreateAccumulatedDoseContainer(10.5, 350.0));
-
-            rootItem.Add(contentSeq);
-            rootSeq.Items.Add(rootItem);
-            ds.Add(rootSeq);
-
-            return new DicomFile(ds);
-        }
-
-        public static DicomDataset CreateAccumulatedDoseContainer(
-            double totalCTDIvol_mGy,
-            double totalDLP_mGy_cm
-        )
-        {
-            var container = new DicomDataset();
-
-            container.Add(DicomTag.RelationshipType, "CONTAINS");
-            container.Add(DicomTag.ValueType, "CONTAINER");
-
-            // ConceptName for Accumulated Dose
-            container.Add(new DicomSequence(
-                DicomTag.ConceptNameCodeSequence,
-                new DicomDataset {
-                { DicomTag.CodeValue, "113812" },
-                { DicomTag.CodingSchemeDesignator, "DCM" },
-                { DicomTag.CodeMeaning, "CT Accumulated Dose Data" }
-                }
-            ));
-
-            container.Add(DicomTag.ContinuityOfContent, "SEPARATE");
-
-            // Create content items
-            var contentItems = new List<DicomDataset>();
-
-            // 1) Accumulated CTDIvol
-            contentItems.Add(
-                CreateAccumulatedDoseItem(
-                    codeValue: "113830",   // CTDIvol
-                    scheme: "DCM",
-                    meaning: "CTDIvol",
-                    numericValue: totalCTDIvol_mGy.ToString("0.###"),
-                    unitCode: "mGy",
-                    unitMeaning: "mGy"
-                )
-            );
-
-            // 2) Accumulated DLP
-            contentItems.Add(
-                CreateAccumulatedDoseItem(
-                    codeValue: "113838",   // DLP
-                    scheme: "DCM",
-                    meaning: "DLP",
-                    numericValue: totalDLP_mGy_cm.ToString("0.###"),
-                    unitCode: "mGy.cm",    // UCUM
-                    unitMeaning: "mGy.cm"
-                )
-            );
-
-            // Add into ContentSequence
-            container.Add(new DicomSequence(
-                DicomTag.ContentSequence,
-                contentItems.ToArray()
-            ));
-
-            return container;
-        }
-
-        private static DicomDataset CreateIrradiationEvent(string codeValue, string meaning, ScanData data)
-        {
-            var evt = new DicomDataset();
-            evt.Add(DicomTag.ValueType, "CONTAINER");
-            evt.Add(new DicomSequence(DicomTag.ConceptNameCodeSequence, CreateCode(codeValue, "DCM", meaning)));
-            evt.Add(DicomTag.ContinuityOfContent, "SEPARATE");
-
-            var seq = new DicomSequence(DicomTag.ContentSequence);
-
-            // Numeric items
-            seq.Items.Add(CreateNumericItem("113733", "DCM", "KVP", data.Kvp, "kV"));
-            seq.Items.Add(CreateNumericItem("113735", "DCM", "X-Ray Tube Current", data.MA, "mA"));
-            seq.Items.Add(CreateNumericItem("113736", "DCM", "Exposure Time", data.ExposureTimeMs, "ms"));
-
-            if (meaning == "CT Acquisition")
+            // Contents
+            var rootContentItems = new List<DicomDataset>();
+            // 1) Accumulated Dose container (TID 10012)
             {
-                seq.Items.Add(CreateNumericItem("113830", "DCM", "CTDIvol", data.CTDIvol, "mGy"));
-                seq.Items.Add(CreateNumericItem("113838", "DCM", "DLP", data.DLP, "mGy.cm"));
+                var container = CreateContainer("113800", "DCM", "CT Accumulated Dose Data");
+
+                // Inside Accumulated Dose: add numeric measurements e.g., Accumulated DLP and CTDIvol
+                var accDlpItem = CreateNumericItem("113805", "DCM", "Accumulated DLP",
+                    DoseInfo.AccDLP, "mGy.cm", "UCUM", "mGy.cm", "CONTAINS");
+                var accCtDiItem = CreateNumericItem("113806", "DCM", "Accumulated CTDIvol",
+                    DoseInfo.AccCTDIvol, "mGy", "UCUM", "mGy", "CONTAINS");
+
+                //
+                container.Add(new DicomSequence(DicomTag.ContentSequence, accDlpItem, accCtDiItem));
+                rootContentItems.Add(container);
+            }
+            // 2) Irradiation Event container (TID 10011)
+            {
+                var irrEvent = CreateContainer("113820", "DCM", "Irradiation Event"); // Concept name code illustrative
+                                                                                      // Add an example numeric for that irradiation event (forward estimates)
+
+                var scout = CreateIrradiationEventScout(50, 100, 500, 250, 30);
+                var ct1 = CreateIrradiationEventCT(50, 100, 500, 250, 30);
+                var ct2 = CreateIrradiationEventCT(50, 100, 500, 250, 30);
+
+
+                irrEvent.Add(new DicomSequence(DicomTag.ContentSequence, scout, ct1, ct2));
+                rootContentItems.Add(irrEvent);
+            }
+            // 3) CT Dose Check Details (TID 10015)
+            {
+                var doseCheckContainer = CreateContainer("113900", "DCM", "Dose Check Alert Details"); // 113900 is the DICOM code for Dose Check Alert Details
+                var doseCheckChildren = new List<DicomDataset>();
+
+                // Indicate whether DLP/CTDI alert values are configured (True/False -> use CODE 'Yes'/'No' from DCID230)
+                // DICOM uses coded "YES/NO" — here we use SCT/other or DCM '113901' etc per template — adapt codes per DICOM spec.
+                bool dlpAlertConfigured = !double.IsNaN(DoseInfo.DLPAlertThreshold);
+                bool ctDiAlertConfigured = !double.IsNaN(DoseInfo.CTDIAlertThreshold);
+                bool dlpNotiConfigured = !double.IsNaN(DoseInfo.DLPNotificationThreshold);
+                bool ctDiNotiConfigured = !double.IsNaN(DoseInfo.CTDINotificationThreshold);
+
+                // CODE items stating whether configured (use DCID 230 'Yes' = (373066001,SCT,"Yes"), 'No' = (373067005,SCT,'No') — these are examples)
+                doseCheckChildren.Add(CreateCodeItemContent("113901", "DCM", "DLP Alert Value Configured", dlpAlertConfigured ? "373066001" : "373067005", "SCT", dlpAlertConfigured ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(CreateCodeItemContent("113902", "DCM", "CTDIvol Alert Value Configured", ctDiAlertConfigured ? "373066001" : "373067005", "SCT", ctDiAlertConfigured ? "Yes" : "No", "CONTAINS"));
+
+                // Add numeric alert values if configured
+                if (dlpAlertConfigured)
+                    doseCheckChildren.Add(CreateNumericItem("113903", "DCM", "DLP Alert Value", DoseInfo.DLPAlertThreshold, "mGy.cm", "UCUM", "mGy.cm", "CONTAINS"));
+                if (ctDiAlertConfigured)
+                    doseCheckChildren.Add(CreateNumericItem("113904", "DCM", "CTDIvol Alert Value", DoseInfo.CTDIAlertThreshold, "mGy", "UCUM", "mGy", "CONTAINS"));
+
+                // Indicate whether notification values are configured (TID 10015 also expects Notification items)
+                doseCheckChildren.Add(CreateCodeItemContent("113911", "DCM", "DLP Notification Value Configured", dlpNotiConfigured ? "373066001" : "373067005", "SCT", dlpNotiConfigured ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(CreateCodeItemContent("113912", "DCM", "CTDIvol Notification Value Configured", ctDiNotiConfigured ? "373066001" : "373067005", "SCT", ctDiNotiConfigured ? "Yes" : "No", "CONTAINS"));
+
+                if (dlpNotiConfigured)
+                    doseCheckChildren.Add(CreateNumericItem("113913", "DCM", "DLP Notification Value", DoseInfo.DLPNotificationThreshold, "mGy.cm", "UCUM", "mGy.cm", "CONTAINS"));
+                if (ctDiNotiConfigured)
+                    doseCheckChildren.Add(CreateNumericItem("113914", "DCM", "CTDIvol Notification Value", DoseInfo.CTDINotificationThreshold, "mGy", "UCUM", "mGy", "CONTAINS"));
+
+                // Now record whether forward estimates exceed Notification or Alert values
+                bool triggeredDlpNotification = dlpNotiConfigured && DoseInfo.AccDLP > DoseInfo.DLPNotificationThreshold;
+                bool triggeredCtDiNotification = ctDiNotiConfigured && DoseInfo.AccCTDIvol > DoseInfo.CTDINotificationThreshold;
+                bool triggeredDlpAlert = dlpAlertConfigured && DoseInfo.AccDLP > DoseInfo.DLPAlertThreshold;
+                bool triggeredCtDiAlert = ctDiAlertConfigured && DoseInfo.AccCTDIvol > DoseInfo.CTDIAlertThreshold;
+
+                // Add CODE items for triggered/not triggered (Yes/No)
+                doseCheckChildren.Add(CreateCodeItemContent("113920", "DCM", "DLP Notification Exceeded", "373066001", "SCT", triggeredDlpNotification ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(CreateCodeItemContent("113921", "DCM", "CTDIvol Notification Exceeded", "373066001", "SCT", triggeredCtDiNotification ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(CreateCodeItemContent("113922", "DCM", "DLP Alert Exceeded", "373066001", "SCT", triggeredDlpAlert ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(CreateCodeItemContent("113923", "DCM", "CTDIvol Alert Exceeded", "373066001", "SCT", triggeredCtDiAlert ? "Yes" : "No", "CONTAINS"));
+
+                doseCheckContainer.Add(new DicomSequence(DicomTag.ContentSequence, doseCheckChildren.ToArray()));
+                rootContentItems.Add(doseCheckContainer);
+            }
+            // 4) AEC
+            {
+                var aecItem = CreateAECContainer(
+                    aecEnabled: true,
+                    aecModeDescription: "Scout-based tube current estimation: single frontal scout, lookup table -> recommended mA."
+                );
+
+                rootContentItems.Add(aecItem);
             }
 
-            evt.Add(seq);
-            return evt;
-        }
+            //
+            var contentSequenceItems = new List<DicomDataset>(rootContentItems);
+            ds.Add(new DicomSequence(DicomTag.ContentSequence, contentSequenceItems.ToArray()));
 
-        public static DicomDataset CreateAccumulatedDoseItem(
-            string codeValue,
-            string scheme,
-            string meaning,
-            string numericValue,
-            string unitCode,       // e.g., "mGy" or "mGy.cm"
-            string unitMeaning      // e.g., "mGy" or "mGy.cm"
-        )
-        {
-            var item = new DicomDataset();
-
-            item.Add(DicomTag.RelationshipType, "CONTAINS");
-            item.Add(DicomTag.ValueType, "NUM");
-
-            // Concept name
-            item.Add(new DicomSequence(
-                DicomTag.ConceptNameCodeSequence,
-                new DicomDataset {
-                { DicomTag.CodeValue, codeValue },
-                { DicomTag.CodingSchemeDesignator, scheme },
-                { DicomTag.CodeMeaning, meaning }
-                }
-            ));
-
-            // Value
-            item.Add(DicomTag.NumericValue, numericValue);
-
-            // Units
-            item.Add(new DicomSequence(
-                DicomTag.MeasurementUnitsCodeSequence,
-                new DicomDataset {
-                { DicomTag.CodeValue, unitCode },
-                { DicomTag.CodingSchemeDesignator, "UCUM" },
-                { DicomTag.CodeMeaning, unitMeaning }
-                }
-            ));
-
-            return item;
-        }
-
-        private static DicomDataset CreateNumericItem(string codeValue, string scheme, string meaning, double value, string unit)
-        {
-            var ds = new DicomDataset();
-            ds.Add(DicomTag.ValueType, "NUM");
-            ds.Add(new DicomSequence(DicomTag.ConceptNameCodeSequence, CreateCode(codeValue, scheme, meaning)));
-            ds.Add(DicomTag.NumericValue, value.ToString("F2"));
-            ds.Add(new DicomSequence(DicomTag.MeasurementUnitsCodeSequence, CreateCode(unit, "UCUM", unit)));
             return ds;
         }
 
-        private static DicomDataset CreateCode(string codeValue, string scheme, string meaning)
+        DicomDataset CreateIrradiationEventCT(double kVp, double mA, double exposureTime, double ctdivol, double dlp)
+        {
+            var ct = new DicomDataset();
+
+            ct.Add(new DicomSequence(
+                DicomTag.ConceptNameCodeSequence,
+                new DicomDataset
+                {
+                    { DicomTag.CodeValue, "113701" },
+                    { DicomTag.CodingSchemeDesignator, "DCM" },
+                    { DicomTag.CodeMeaning, "CT Irradiation Event Data" }
+                }));
+
+            ct.AddOrUpdate(DicomTag.IrradiationEventUID, DicomUID.Generate().UID);
+
+            // Acquisition Type = SPIRAL CT (113620, DCM)
+            ct.Add(new DicomSequence(
+                CustomDicomTags.AcquisitionTypeCodeSequence,
+                new DicomDataset
+                {
+                    { DicomTag.CodeValue, "113620" },
+                    { DicomTag.CodingSchemeDesignator, "DCM" },
+                    { DicomTag.CodeMeaning, "SPIRAL CT" }
+                }));
+
+            ct.AddOrUpdate(DicomTag.KVP, kVp.ToString());
+            ct.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
+            ct.AddOrUpdate(DicomTag.ExposureTime, exposureTime.ToString());
+            ct.AddOrUpdate(DicomTag.CTDIvol, ctdivol.ToString());
+            ct.AddOrUpdate(CustomDicomTags.DLP, dlp.ToString());
+
+            // AEC indicator (Exposure Modulation Type)
+            ct.Add(new DicomSequence(
+                DicomTag.ExposureModulationType,
+                new DicomDataset
+                {
+                    { DicomTag.CodeValue, "OTH" },        // Use OTH for "OTHER"
+                    { DicomTag.CodingSchemeDesignator, "DCM" },
+                    { DicomTag.CodeMeaning, "OTHER" }
+                }));
+
+            return ct;
+        }
+
+        DicomDataset CreateIrradiationEventScout(double kVp, double mA, double exposureTime, double ctdivol, double dlp)
+        {
+            var irrEvent = CreateContainer("113701", "DCM", "CT Irradiation Event Data");
+
+
+            var scout = new DicomDataset();
+
+            // ConceptNameCodeSequence: CT Irradiation Event Data (113701, DCM)
+            scout.Add(new DicomSequence(
+                DicomTag.ConceptNameCodeSequence,
+                new DicomDataset
+                {
+                    { DicomTag.CodeValue, "113701" },
+                    { DicomTag.CodingSchemeDesignator, "DCM" },
+                    { DicomTag.CodeMeaning, "CT Irradiation Event Data" }
+                }));
+
+            scout.AddOrUpdate(DicomTag.IrradiationEventUID, DicomUID.Generate().UID);
+
+            // Acquisition Type = LOCALIZER (113622, DCM)
+            scout.Add(new DicomSequence(
+                CustomDicomTags.AcquisitionTypeCodeSequence,
+                new DicomDataset
+                {
+                    { DicomTag.CodeValue, "113622" },
+                    { DicomTag.CodingSchemeDesignator, "DCM" },
+                    { DicomTag.CodeMeaning, "LOCALIZER" }
+                }));
+
+            scout.AddOrUpdate(DicomTag.KVP, kVp.ToString());
+            scout.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
+            scout.AddOrUpdate(DicomTag.ExposureTime, exposureTime.ToString());
+            scout.AddOrUpdate(DicomTag.CTDIvol, ctdivol.ToString());
+            scout.AddOrUpdate(CustomDicomTags.DLP, dlp.ToString());
+
+            return scout;
+        }
+
+        void AddConceptNameCodeSequence(DicomDataset parent, string codeValue, string scheme, string meaning)
+        {
+            var seqItem = new DicomDataset();
+            seqItem.Add(DicomTag.CodeValue, codeValue);
+            seqItem.Add(DicomTag.CodingSchemeDesignator, scheme);
+            seqItem.Add(DicomTag.CodeMeaning, meaning);
+            var seq = new DicomSequence(DicomTag.ConceptNameCodeSequence, seqItem);
+            parent.Add(seq);
+        }
+
+        DicomDataset CreateCodeItem(string codeValue, string codingScheme, string codeMeaning)
         {
             var ds = new DicomDataset();
             ds.Add(DicomTag.CodeValue, codeValue);
-            ds.Add(DicomTag.CodingSchemeDesignator, scheme);
-            ds.Add(DicomTag.CodeMeaning, meaning);
+            ds.Add(DicomTag.CodingSchemeDesignator, codingScheme);
+            ds.Add(DicomTag.CodeMeaning, codeMeaning);
             return ds;
+        }
+
+        DicomDataset CreateContainer(string containerNameCodeValue, string scheme, string meaning, string relationshipType = "CONTAINS")
+        {
+            var item = new DicomDataset();
+            item.Add(DicomTag.ValueType, "CONTAINER");                      // (0040,A040)
+            AddConceptNameCodeSequence(item, containerNameCodeValue, scheme, meaning); // (0040,A043)
+            item.Add(DicomTag.RelationshipType, relationshipType);          // (0040,A010)
+                                                                            // Optionally add a template id sequence or continuity etc.
+            return item;
+        }
+
+        DicomDataset CreateNumericItem(string nameCodeValue, string nameScheme, string nameMeaning,
+                                              double value, string unitsCodeValue, string unitsScheme, string unitsMeaning,
+                                              string relationshipType = "HAS CONCEPT MOD")
+        {
+            var item = new DicomDataset();
+            item.Add(DicomTag.ValueType, "NUM");                            // (0040,A040)
+            AddConceptNameCodeSequence(item, nameCodeValue, nameScheme, nameMeaning);
+
+            // Measured Value Sequence (0040,A300) containing Numeric Value (0040,A30A)
+            var measured = new DicomDataset();
+            measured.Add(DicomTag.NumericValue, value.ToString("G"));       // (0040,A30A) Decimal String
+                                                                            // Measurement Units Code Sequence (0040,08EA)
+            var units = new DicomDataset();
+            units.Add(DicomTag.CodeValue, unitsCodeValue);
+            units.Add(DicomTag.CodingSchemeDesignator, unitsScheme);
+            units.Add(DicomTag.CodeMeaning, unitsMeaning);
+            measured.Add(new DicomSequence(DicomTag.MeasurementUnitsCodeSequence, units));
+            item.Add(new DicomSequence(DicomTag.MeasuredValueSequence, measured));
+            item.Add(DicomTag.RelationshipType, relationshipType);          // (0040,A010)
+            return item;
+        }
+
+        DicomDataset CreateCodeItemContent(string nameCodeValue, string nameScheme, string nameMeaning,
+                                                  string valueCodeValue, string valueScheme, string valueMeaning,
+                                                  string relationshipType = "HAS CONCEPT MOD")
+        {
+            var item = new DicomDataset();
+            item.Add(DicomTag.ValueType, "CODE");
+            AddConceptNameCodeSequence(item, nameCodeValue, nameScheme, nameMeaning);
+
+            var value = new DicomDataset();
+            value.Add(DicomTag.CodeValue, valueCodeValue);
+            value.Add(DicomTag.CodingSchemeDesignator, valueScheme);
+            value.Add(DicomTag.CodeMeaning, valueMeaning);
+            item.Add(new DicomSequence(DicomTag.ConceptCodeSequence, value)); // (0040,A168) Concept Code Sequence
+            item.Add(DicomTag.RelationshipType, relationshipType);
+            return item;
+        }
+
+        DicomDataset CreateAECContainer(bool aecEnabled, string aecModeDescription)
+        {
+            var aecContainer = CreateContainer("113950", "DCM", "Automatic Exposure Control Details");
+
+            // 1) AEC Enabled
+            var aecEnabledItem = new DicomDataset();
+            aecEnabledItem.Add(DicomTag.ValueType, "TEXT");
+            AddConceptNameCodeSequence(aecEnabledItem, "113951", "DCM", "AEC Enabled");
+            aecEnabledItem.Add(DicomTag.TextValue, aecEnabled ? "ON" : "OFF");
+            aecEnabledItem.Add(DicomTag.RelationshipType, "HAS OBS CONTEXT");
+
+            // 2) AEC Mode Description
+            var aecModeDescItem = new DicomDataset();
+            aecModeDescItem.Add(DicomTag.ValueType, "TEXT");
+            AddConceptNameCodeSequence(aecModeDescItem, "113952", "DCM", "AEC Mode Description");
+            aecModeDescItem.Add(DicomTag.TextValue, aecModeDescription ?? "Scout-based mA estimation using standard scout + mA table");
+            aecModeDescItem.Add(DicomTag.RelationshipType, "HAS CONCEPT MOD");
+
+            //// 3) Estimated mA (NUM) - this is the mA selected/estimated from the scout
+            //var estMAItem = CreateNumericItem("113953", "DCM", "Estimated mA from Scout", estimatedMA, "mA", "UCUM", "mA", "CONTAINS");
+
+            //// 4) Control variable used by AEC - use DICOM code 111641 "Patient Equivalent Thickness" (control variable)
+            ////    Code 111641 is defined in DICOM Controlled Terminology as "Patient Equivalent Thickness".
+            //var controlVarItem = new DicomDataset();
+            //controlVarItem.Add(DicomTag.ValueType, "NUM");
+            //AddConceptNameCodeSequence(controlVarItem, "111641", "DCM", "Patient Equivalent Thickness");
+            //// measured value sequence
+            //var measured = new DicomDataset();
+            //measured.Add(DicomTag.NumericValue, patientEquivalentThickness.ToString("G"));
+            //var units = new DicomDataset();
+            //units.Add(DicomTag.CodeValue, "mm");                 // UCUM code token for millimeter
+            //units.Add(DicomTag.CodingSchemeDesignator, "UCUM");
+            //units.Add(DicomTag.CodeMeaning, "mm");
+            //measured.Add(new DicomSequence(DicomTag.MeasurementUnitsCodeSequence, units));
+            //controlVarItem.Add(new DicomSequence(DicomTag.MeasuredValueSequence, measured));
+            //controlVarItem.Add(DicomTag.RelationshipType, "CONTAINS");
+
+            // 5) X-Ray Modulation type (CODE) - example values: ANGULAR, LONGITUDINAL, NONE
+            //    Use DICOM concept "X-Ray Modulation Type" (controlled term code 113845 exists in DICOM CT terminology).
+            //    Here we store the actual modulation used (for your device we can store NONE since you said "No dynamic modulation during rotation").
+            var modulationItem = new DicomDataset();
+            modulationItem.Add(DicomTag.ValueType, "CODE");
+            AddConceptNameCodeSequence(modulationItem, "113845", "DCM", "X-Ray Modulation Type");
+            // If your device uses NO modulation (you said system does not modify exposure during rotation), use value "NONE".
+            var modulationValue = new DicomDataset();
+            modulationValue.Add(DicomTag.CodeValue, "NONE");
+            modulationValue.Add(DicomTag.CodingSchemeDesignator, "DCM");
+            modulationValue.Add(DicomTag.CodeMeaning, "None");
+            modulationItem.Add(new DicomSequence(DicomTag.ConceptCodeSequence, modulationValue));
+            modulationItem.Add(DicomTag.RelationshipType, "CONTAINS");
+
+            // Group them into the AEC container's ContentSequence
+            aecContainer.Add(new DicomSequence(DicomTag.ContentSequence,
+                aecEnabledItem,
+                aecModeDescItem,
+                modulationItem));
+
+            return aecContainer;
         }
     }
 }

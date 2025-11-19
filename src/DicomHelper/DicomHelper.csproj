@@ -117,9 +117,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DoseInfo_t.cs" />
+    <Compile Include="PatientInfo_t.cs" />
+    <Compile Include="ProductInfo_t.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RdsrBuilder.cs" />
+    <Compile Include="RDSRBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
