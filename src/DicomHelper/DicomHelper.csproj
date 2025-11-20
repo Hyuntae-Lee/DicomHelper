@@ -119,6 +119,7 @@
   <ItemGroup>
     <Compile Include="DoseInfo_t.cs" />
     <Compile Include="InputParser.cs" />
+    <Compile Include="IrradiationEvents_t.cs" />
     <Compile Include="PatientInfo_t.cs" />
     <Compile Include="ProductInfo_t.cs" />
     <Compile Include="Program.cs" />

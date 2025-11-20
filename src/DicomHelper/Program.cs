@@ -9,53 +9,38 @@ namespace DicomHelper
 {
     class Program
     {
-        const string RDSRInofPath = @"D:\TTT\RDSR.json";
+        const string RDSRInfoPath = @"D:\Projects\Utilities\DicomHelper\git\src\SampleData\RDSR.json";
+
         static void Main()
         {
-            string sampleId = DateTime.UtcNow.ToString("HHmmss");
+            PatientInfo_t patientInfo = new PatientInfo_t();
+            ProductInfo_t productInfo = new ProductInfo_t();
+            DoseInfo_t doseInfo = new DoseInfo_t();
+            StudyInfo_t studyInfo = new StudyInfo_t();
+            List<IrradiationEvents_t> irrEventList = new List<IrradiationEvents_t>();
 
+            // get input
+            if (!InputParser.ParseInput(ref patientInfo, ref productInfo, ref doseInfo, ref studyInfo, ref irrEventList,
+                RDSRInfoPath))
+            {
+                return;
+            }
+
+            // create builder
             var rdsrBuilder = new RDSRBuilder();
-            // - patient
-            rdsrBuilder.PatientInfo.Name = string.Format(@"Patient^{0}", sampleId);
-            rdsrBuilder.PatientInfo.ID = sampleId;
-            rdsrBuilder.PatientInfo.Age = 21;
-            rdsrBuilder.PatientInfo.Gender = "M";
-            rdsrBuilder.PatientInfo.BirthDate = "19971013";
-            rdsrBuilder.PatientInfo.TargetPart = "Chest";
-            rdsrBuilder.PatientInfo.Pediatric = false;
-            // - product
-            rdsrBuilder.ProductInfo.Manufacturer = "vatech";
-            rdsrBuilder.ProductInfo.ModelName = "DCT-01CS";
-            rdsrBuilder.ProductInfo.InstitutionName = "";
-            rdsrBuilder.ProductInfo.InstitutionAddress = "";
-            rdsrBuilder.ProductInfo.StationName = "Smart M Plus";
-            rdsrBuilder.ProductInfo.DeviceSerialNumber = "SN111112222";
-            rdsrBuilder.ProductInfo.SoftwareVersion = "1.0.0.0";
-            rdsrBuilder.StudyInfo.SOPInstanceUID = "1.2.410.200028.20261119121212.1";
-            rdsrBuilder.StudyInfo.StudyInstanceUID = "1.2.410.200028.20261119121212.1.1";
-            rdsrBuilder.StudyInfo.SeriesInstanceUID = "1.2.410.200028.20261119121212.1.1.1";
-            rdsrBuilder.StudyInfo.SpecificCharacterSet = "ISO_IR 192";
-            rdsrBuilder.StudyInfo.SeriesNumber = "1";
-            rdsrBuilder.StudyInfo.InstanceNumber = "1";
-            rdsrBuilder.StudyInfo.StudyDate = "19970302";
-            rdsrBuilder.StudyInfo.StudyTime = "163759";
-            rdsrBuilder.StudyInfo.AccessionNumber = "A-0001";
 
-            // - dose
-            rdsrBuilder.DoseInfo.AccCTDIvol = 150.0;
-            rdsrBuilder.DoseInfo.AccDLP = 10.0;
-            rdsrBuilder.DoseInfo.DLPNotificationThreshold = 100.0;
-            rdsrBuilder.DoseInfo.DLPAlertThreshold = 200.0;
-            rdsrBuilder.DoseInfo.CTDINotificationThreshold = 10.0;
-            rdsrBuilder.DoseInfo.CTDIAlertThreshold = 25.0;
+            // set input to builder
+            rdsrBuilder.PatientInfo = patientInfo;
+            rdsrBuilder.ProductInfo = productInfo;
+            rdsrBuilder.DoseInfo = doseInfo;
+            rdsrBuilder.IrrEventList.AddRange(irrEventList);
 
-            // usage
+            // build data set
             var ds = rdsrBuilder.BuildRDSR();
 
-            // Save to file
+            // save to file
             var file = new DicomFile(ds);
-
-            file.Save(string.Format(@"D:\TTT\RDSR_{0}.dcm", sampleId));
+            file.Save(@"D:\TTT\RDSR_T.dcm");
         }
     }
 }

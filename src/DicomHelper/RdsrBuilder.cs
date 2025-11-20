@@ -19,21 +19,15 @@ namespace DicomHelper
 
     class RDSRBuilder
     {
-        public PatientInfo_t PatientInfo { get { return _patientInfo; } }
-        private PatientInfo_t _patientInfo;
-        public ProductInfo_t ProductInfo { get { return _productInfo; } }
-        private ProductInfo_t _productInfo;
-        public DoseInfo_t DoseInfo { get { return _doseInfo; } }
-        private DoseInfo_t _doseInfo;
-        public StudyInfo_t StudyInfo { get { return _studyInfo_t; } }
-        private StudyInfo_t _studyInfo_t;
+        public PatientInfo_t PatientInfo { set; get; }
+        public ProductInfo_t ProductInfo { set; get; }
+        public DoseInfo_t DoseInfo { set; get; }
+        public StudyInfo_t StudyInfo { set; get; }
+        public List<IrradiationEvents_t> IrrEventList { set; get; }
 
         public RDSRBuilder()
         {
-            _patientInfo = new PatientInfo_t();
-            _productInfo = new ProductInfo_t();
-            _doseInfo = new DoseInfo_t();
-            _studyInfo_t = new StudyInfo_t();
+            IrrEventList = new List<IrradiationEvents_t>();
         }
 
         public DicomDataset BuildRDSR()

@@ -1,42 +1,72 @@
 {
-    "SpecificCharacterSet" : "ISO_IR 100",
-    "SOPClassUID" : "1.2.840.10008.5.1.4.1.1.88.67",
-    "SOPInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.99",
-    "StudyInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.999",
-    "SeriesInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.9999",
-    "Modality" : "SR",
-    "SeriesNumber" : 1,
-    "InstanceNumber" : 1,
-    "PatientName" : "DOE^JOHN",
-    "PatientID" : "P123456",
-    "PatientBirthDate" : "19700101",
-    "PatientSex" : "M",
-    "StudyDate" : "19970302",
-    "StudyTime" : "163759",
-    "AccessionNumber" : "A-0001",
-    "StudyDescription" : "CT Chest Routine",
-
-    "RDSRRoot" : {
-        "Meaning" : "X-Ray Radiation Dose Report",
-
-        "manufacturer" : "AcmeCT",
-        "modelName" : "Model123",
-        "deviceSerialNumber" : "SN-987654",
-        "softwareVersions" : "v1.2.3",
-        "stationName" : "CT1",
-
-        "AccumulatedDose" : {
-            "DLP" : {
-                "Value" : 350.0,
-                "Unit" : "mGy.cm"
-            },
-
-            "CTDIvol" : {
-                "Value" : 10.5,
-                "Unit" : "mGy"
-            }
-        }
+    "Header" : {
+        "PatientName" : "DOE^JOHN",
+        "PatientID" : "P123456",
+        "PatientAge" : 23,
+        "PatientGender" : "M",
+        "PatientBirthDate" : "19700101",
+        "TargetPart" : "L-Spine",
+        "Pediatric" : false,
+        "Manufacturer" : "vatech",
+        "ModelName" : "DCT-01CS",
+        "InstitutionName" : "",
+        "InstitutionAddress" : "",
+        "StationName" : "Smart M Plus",
+        "DeviceSerialNumber" : "SN111112222",
+        "SoftwareVersion" : "1.0.0.0",
+        "SOPInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.99",
+        "StudyInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.999",
+        "SeriesInstanceUID" : "1.2.840.10008.5.1.4.1.1.88.67.9999",
+        "SpecificCharacterSet" : "ISO_IR 192",
+        "SeriesNumber" : "1",
+        "InstanceNumber" : "1",
+        "StudyDate" : "19970302",
+        "StudyTime" : "163759",
+        "AccessionNumber" : "A-0001"
     },
 
-    
+    "Settings" : {
+        "DLPAlertThreshold" : 10.0,
+        "CTDIAlertThreshold" : 10.0,
+        "DLPNotificationThreshold" : 10.0,
+        "CTDINotificationThreshold" : 10.0,
+        "DLPUnit" : "mGy.cm",
+        "CTDIvolUnit" : "mGy"
+    },
+
+    "Contents" : {
+        "AccumulatedDose" : {
+            "DLP" : 350.0,
+            "CTDIvol" : 10.5
+        },
+        "IrradiationEvents" : [
+            {
+                "Modality" : "Scout",
+                "kVp" : 10.0,
+                "mA" : 120.0,
+                "ExposureTime" : 13.0,
+                "DAP" : 130,
+                "CTDIvol" : 0,
+                "DLP" : 0
+            },
+            {
+                "Modality" : "CT",
+                "kVp" : 10.0,
+                "mA" : 120.0,
+                "ExposureTime" : 13.0,
+                "DAP" : 0,
+                "CTDIvol" : 130,
+                "DLP" : 120
+            },
+            {
+                "Modality" : "CT",
+                "kVp" : 11.0,
+                "mA" : 121.0,
+                "ExposureTime" : 14.0,
+                "DAP" : 0,
+                "CTDIvol" : 140,
+                "DLP" : 130
+            }
+        ]
+    }
 }
