@@ -92,32 +92,28 @@ namespace DicomHelper
             }
             // 2) Irradiation Event container (TID 10011)
             {
-                var irrEvent = NewContainer("113820", "DCM", "Irradiation Event"); // Concept name code illustrative
-                                                                                      // Add an example numeric for that irradiation event (forward estimates)
+                var irrEvent = NewContainer("113820", "DCM", "Irradiation Event");
 
-                var scout = CreateIrradiationEventScout(50, 100, 500, 250, 30);
-                var ct1 = CreateIrradiationEventCT(50, 100, 500, 250, 30);
-                var ct2 = CreateIrradiationEventCT(50, 100, 500, 250, 30);
-
+                var scout = NewIrradiationEventScout(50, 100, 500, 250, 30);
+                var ct1 = NewIrradiationEventCT(50, 100, 500, 250, 30);
+                var ct2 = NewIrradiationEventCT(50, 100, 500, 250, 30);
 
                 irrEvent.Add(new DicomSequence(DicomTag.ContentSequence, scout, ct1, ct2));
                 rootContentItems.Add(irrEvent);
             }
             // 3) CT Dose Check Details (TID 10015)
             {
-                var doseCheckContainer = NewContainer("113900", "DCM", "Dose Check Alert Details"); // 113900 is the DICOM code for Dose Check Alert Details
+                var doseCheckContainer = NewContainer("113900", "DCM", "Dose Check Alert Details");
                 var doseCheckChildren = new List<DicomDataset>();
 
-                // Indicate whether DLP/CTDI alert values are configured (True/False -> use CODE 'Yes'/'No' from DCID230)
-                // DICOM uses coded "YES/NO" — here we use SCT/other or DCM '113901' etc per template — adapt codes per DICOM spec.
                 bool dlpAlertConfigured = !double.IsNaN(DoseInfo.DLPAlertThreshold);
                 bool ctDiAlertConfigured = !double.IsNaN(DoseInfo.CTDIAlertThreshold);
                 bool dlpNotiConfigured = !double.IsNaN(DoseInfo.DLPNotificationThreshold);
                 bool ctDiNotiConfigured = !double.IsNaN(DoseInfo.CTDINotificationThreshold);
 
-                // CODE items stating whether configured (use DCID 230 'Yes' = (373066001,SCT,"Yes"), 'No' = (373067005,SCT,'No') — these are examples)
-                doseCheckChildren.Add(CreateCodeItemContent("113901", "DCM", "DLP Alert Value Configured", dlpAlertConfigured ? "373066001" : "373067005", "SCT", dlpAlertConfigured ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(CreateCodeItemContent("113902", "DCM", "CTDIvol Alert Value Configured", ctDiAlertConfigured ? "373066001" : "373067005", "SCT", ctDiAlertConfigured ? "Yes" : "No", "CONTAINS"));
+                //
+                doseCheckChildren.Add(NewCodeItemContent("113901", "DCM", "DLP Alert Value Configured", dlpAlertConfigured ? "373066001" : "373067005", "SCT", dlpAlertConfigured ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113902", "DCM", "CTDIvol Alert Value Configured", ctDiAlertConfigured ? "373066001" : "373067005", "SCT", ctDiAlertConfigured ? "Yes" : "No", "CONTAINS"));
 
                 // Add numeric alert values if configured
                 if (dlpAlertConfigured)
@@ -126,8 +122,8 @@ namespace DicomHelper
                     doseCheckChildren.Add(NewNumericItem("113904", "DCM", "CTDIvol Alert Value", DoseInfo.CTDIAlertThreshold, "mGy", "UCUM", "mGy", "CONTAINS"));
 
                 // Indicate whether notification values are configured (TID 10015 also expects Notification items)
-                doseCheckChildren.Add(CreateCodeItemContent("113911", "DCM", "DLP Notification Value Configured", dlpNotiConfigured ? "373066001" : "373067005", "SCT", dlpNotiConfigured ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(CreateCodeItemContent("113912", "DCM", "CTDIvol Notification Value Configured", ctDiNotiConfigured ? "373066001" : "373067005", "SCT", ctDiNotiConfigured ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113911", "DCM", "DLP Notification Value Configured", dlpNotiConfigured ? "373066001" : "373067005", "SCT", dlpNotiConfigured ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113912", "DCM", "CTDIvol Notification Value Configured", ctDiNotiConfigured ? "373066001" : "373067005", "SCT", ctDiNotiConfigured ? "Yes" : "No", "CONTAINS"));
 
                 if (dlpNotiConfigured)
                     doseCheckChildren.Add(NewNumericItem("113913", "DCM", "DLP Notification Value", DoseInfo.DLPNotificationThreshold, "mGy.cm", "UCUM", "mGy.cm", "CONTAINS"));
@@ -141,17 +137,17 @@ namespace DicomHelper
                 bool triggeredCtDiAlert = ctDiAlertConfigured && DoseInfo.AccCTDIvol > DoseInfo.CTDIAlertThreshold;
 
                 // Add CODE items for triggered/not triggered (Yes/No)
-                doseCheckChildren.Add(CreateCodeItemContent("113920", "DCM", "DLP Notification Exceeded", "373066001", "SCT", triggeredDlpNotification ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(CreateCodeItemContent("113921", "DCM", "CTDIvol Notification Exceeded", "373066001", "SCT", triggeredCtDiNotification ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(CreateCodeItemContent("113922", "DCM", "DLP Alert Exceeded", "373066001", "SCT", triggeredDlpAlert ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(CreateCodeItemContent("113923", "DCM", "CTDIvol Alert Exceeded", "373066001", "SCT", triggeredCtDiAlert ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113920", "DCM", "DLP Notification Exceeded", "373066001", "SCT", triggeredDlpNotification ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113921", "DCM", "CTDIvol Notification Exceeded", "373066001", "SCT", triggeredCtDiNotification ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113922", "DCM", "DLP Alert Exceeded", "373066001", "SCT", triggeredDlpAlert ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113923", "DCM", "CTDIvol Alert Exceeded", "373066001", "SCT", triggeredCtDiAlert ? "Yes" : "No", "CONTAINS"));
 
                 doseCheckContainer.Add(new DicomSequence(DicomTag.ContentSequence, doseCheckChildren.ToArray()));
                 rootContentItems.Add(doseCheckContainer);
             }
             // 4) AEC
             {
-                var aecItem = CreateAECContainer(
+                var aecItem = NewAECContainer(
                     aecEnabled: true,
                     aecModeDescription: "Scout-based tube current estimation: single frontal scout, lookup table -> recommended mA."
                 );
@@ -166,30 +162,20 @@ namespace DicomHelper
             return ds;
         }
 
-        DicomDataset CreateIrradiationEventCT(double kVp, double mA, double exposureTime, double ctdivol, double dlp)
+        DicomDataset NewIrradiationEventCT(double kVp, double mA, double exposureTime, double ctdivol, double dlp)
         {
             var ct = new DicomDataset();
 
             ct.Add(new DicomSequence(
                 DicomTag.ConceptNameCodeSequence,
-                new DicomDataset
-                {
-                    { DicomTag.CodeValue, "113701" },
-                    { DicomTag.CodingSchemeDesignator, "DCM" },
-                    { DicomTag.CodeMeaning, "CT Irradiation Event Data" }
-                }));
+                NewCodeItem("113701", "DCM", "CT Irradiation Event Data")));
 
             ct.AddOrUpdate(DicomTag.IrradiationEventUID, DicomUID.Generate().UID);
 
             // Acquisition Type = SPIRAL CT (113620, DCM)
             ct.Add(new DicomSequence(
                 CustomDicomTags.AcquisitionTypeCodeSequence,
-                new DicomDataset
-                {
-                    { DicomTag.CodeValue, "113620" },
-                    { DicomTag.CodingSchemeDesignator, "DCM" },
-                    { DicomTag.CodeMeaning, "SPIRAL CT" }
-                }));
+                NewCodeItem("113620", "DCM", "SPIRAL CT")));
 
             ct.AddOrUpdate(DicomTag.KVP, kVp.ToString());
             ct.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
@@ -200,44 +186,26 @@ namespace DicomHelper
             // AEC indicator (Exposure Modulation Type)
             ct.Add(new DicomSequence(
                 DicomTag.ExposureModulationType,
-                new DicomDataset
-                {
-                    { DicomTag.CodeValue, "OTH" },        // Use OTH for "OTHER"
-                    { DicomTag.CodingSchemeDesignator, "DCM" },
-                    { DicomTag.CodeMeaning, "OTHER" }
-                }));
+                NewCodeItem("OTH", "DCM", "OTHER")));
 
             return ct;
         }
 
-        DicomDataset CreateIrradiationEventScout(double kVp, double mA, double exposureTime, double ctdivol, double dlp)
+        DicomDataset NewIrradiationEventScout(double kVp, double mA, double exposureTime, double ctdivol, double dlp)
         {
-            var irrEvent = NewContainer("113701", "DCM", "CT Irradiation Event Data");
-
-
             var scout = new DicomDataset();
 
             // ConceptNameCodeSequence: CT Irradiation Event Data (113701, DCM)
             scout.Add(new DicomSequence(
                 DicomTag.ConceptNameCodeSequence,
-                new DicomDataset
-                {
-                    { DicomTag.CodeValue, "113701" },
-                    { DicomTag.CodingSchemeDesignator, "DCM" },
-                    { DicomTag.CodeMeaning, "CT Irradiation Event Data" }
-                }));
+                NewCodeItem("113701", "DCM", "CT Irradiation Event Data")));
 
             scout.AddOrUpdate(DicomTag.IrradiationEventUID, DicomUID.Generate().UID);
 
             // Acquisition Type = LOCALIZER (113622, DCM)
             scout.Add(new DicomSequence(
                 CustomDicomTags.AcquisitionTypeCodeSequence,
-                new DicomDataset
-                {
-                    { DicomTag.CodeValue, "113622" },
-                    { DicomTag.CodingSchemeDesignator, "DCM" },
-                    { DicomTag.CodeMeaning, "LOCALIZER" }
-                }));
+                NewCodeItem("113622", "DCM", "LOCALIZER")));
 
             scout.AddOrUpdate(DicomTag.KVP, kVp.ToString());
             scout.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
@@ -303,24 +271,22 @@ namespace DicomHelper
             return item;
         }
 
-        DicomDataset CreateCodeItemContent(string nameCodeValue, string nameScheme, string nameMeaning,
-                                                  string valueCodeValue, string valueScheme, string valueMeaning,
-                                                  string relationshipType = "HAS CONCEPT MOD")
+        DicomDataset NewCodeItemContent(string nameCodeValue, string nameScheme, string nameMeaning,
+            string valueCodeValue, string valueScheme, string valueMeaning,
+            string relationshipType = "HAS CONCEPT MOD")
         {
             var item = new DicomDataset();
             item.Add(DicomTag.ValueType, "CODE");
             item.Add(NewConceptNameCodeSequence(nameCodeValue, nameScheme, nameMeaning));
-
-            var value = new DicomDataset();
-            value.Add(DicomTag.CodeValue, valueCodeValue);
-            value.Add(DicomTag.CodingSchemeDesignator, valueScheme);
-            value.Add(DicomTag.CodeMeaning, valueMeaning);
-            item.Add(new DicomSequence(DicomTag.ConceptCodeSequence, value)); // (0040,A168) Concept Code Sequence
             item.Add(DicomTag.RelationshipType, relationshipType);
+
+            var seq = new DicomSequence(DicomTag.ConceptCodeSequence, NewCodeItem(valueCodeValue, valueScheme, valueMeaning));
+            item.Add(seq);
+
             return item;
         }
 
-        DicomDataset CreateAECContainer(bool aecEnabled, string aecModeDescription)
+        DicomDataset NewAECContainer(bool aecEnabled, string aecModeDescription)
         {
             var aecContainer = NewContainer("113950", "DCM", "Automatic Exposure Control Details");
 
@@ -328,8 +294,6 @@ namespace DicomHelper
             var aecEnabledItem = new DicomDataset();
             aecEnabledItem.Add(DicomTag.ValueType, "TEXT");
             aecEnabledItem.Add(NewConceptNameCodeSequence("113951", "DCM", "AEC Enabled"));
-
-
             aecEnabledItem.Add(DicomTag.TextValue, aecEnabled ? "ON" : "OFF");
             aecEnabledItem.Add(DicomTag.RelationshipType, "HAS OBS CONTEXT");
 
@@ -340,33 +304,12 @@ namespace DicomHelper
             aecModeDescItem.Add(DicomTag.TextValue, aecModeDescription ?? "Scout-based mA estimation using standard scout + mA table");
             aecModeDescItem.Add(DicomTag.RelationshipType, "HAS CONCEPT MOD");
 
-            //// 3) Estimated mA (NUM) - this is the mA selected/estimated from the scout
-            //var estMAItem = CreateNumericItem("113953", "DCM", "Estimated mA from Scout", estimatedMA, "mA", "UCUM", "mA", "CONTAINS");
-
-            //// 4) Control variable used by AEC - use DICOM code 111641 "Patient Equivalent Thickness" (control variable)
-            ////    Code 111641 is defined in DICOM Controlled Terminology as "Patient Equivalent Thickness".
-            //var controlVarItem = new DicomDataset();
-            //controlVarItem.Add(DicomTag.ValueType, "NUM");
-            //AddConceptNameCodeSequence(controlVarItem, "111641", "DCM", "Patient Equivalent Thickness");
-            //// measured value sequence
-            //var measured = new DicomDataset();
-            //measured.Add(DicomTag.NumericValue, patientEquivalentThickness.ToString("G"));
-            //var units = new DicomDataset();
-            //units.Add(DicomTag.CodeValue, "mm");                 // UCUM code token for millimeter
-            //units.Add(DicomTag.CodingSchemeDesignator, "UCUM");
-            //units.Add(DicomTag.CodeMeaning, "mm");
-            //measured.Add(new DicomSequence(DicomTag.MeasurementUnitsCodeSequence, units));
-            //controlVarItem.Add(new DicomSequence(DicomTag.MeasuredValueSequence, measured));
-            //controlVarItem.Add(DicomTag.RelationshipType, "CONTAINS");
-
-            // 5) X-Ray Modulation type (CODE) - example values: ANGULAR, LONGITUDINAL, NONE
-            //    Use DICOM concept "X-Ray Modulation Type" (controlled term code 113845 exists in DICOM CT terminology).
-            //    Here we store the actual modulation used (for your device we can store NONE since you said "No dynamic modulation during rotation").
+            // 3) X-Ray Modulation type (CODE)
             var modulationItem = new DicomDataset();
             modulationItem.Add(DicomTag.ValueType, "CODE");
             modulationItem.Add(NewConceptNameCodeSequence("113845", "DCM", "X-Ray Modulation Type"));
 
-            // If your device uses NO modulation (you said system does not modify exposure during rotation), use value "NONE".
+            // 4) Modulation - System does not modify exposure during rotation -> "NONE".
             var modulationValue = new DicomDataset();
             modulationValue.Add(DicomTag.CodeValue, "NONE");
             modulationValue.Add(DicomTag.CodingSchemeDesignator, "DCM");
@@ -376,9 +319,7 @@ namespace DicomHelper
 
             // Group them into the AEC container's ContentSequence
             aecContainer.Add(new DicomSequence(DicomTag.ContentSequence,
-                aecEnabledItem,
-                aecModeDescItem,
-                modulationItem));
+                aecEnabledItem, aecModeDescItem, modulationItem));
 
             return aecContainer;
         }
