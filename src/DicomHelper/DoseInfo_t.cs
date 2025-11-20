@@ -10,6 +10,8 @@ namespace DicomHelper
     {
         public double AccDLP { set; get; }
         public double AccCTDIvol { set; get; }
+        public string DLPUnit { set; get; }
+        public string CTDIlvolUnit { set; get; }
         public double DLPNotificationThreshold { set; get; }
         public double DLPAlertThreshold { set; get; }
         public double CTDINotificationThreshold { set; get; }
