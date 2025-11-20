@@ -95,6 +95,9 @@ namespace DicomHelper
             // 2) Irradiation Event container (TID 10011)
             {
                 var irrEvent = NewContainer("113820", "DCM", "Irradiation Event");
+                
+                irrEvent.AddOrUpdate(DicomTag.ValueType, "CONTAINER");
+                irrEvent.AddOrUpdate(DicomTag.RelationshipType, "CONTAINS");
 
                 var scout = NewIrradiationEventScout(50, 100, 500, 30);
                 var ct1 = NewIrradiationEventCT(50, 100, 500, 250, 30);
@@ -168,27 +171,53 @@ namespace DicomHelper
         {
             var ct = new DicomDataset();
 
+            // Mandatory SR fields
+            ct.AddOrUpdate(DicomTag.ValueType, "CONTAINER");
+            ct.AddOrUpdate(DicomTag.RelationshipType, "CONTAINS");
+            ct.AddOrUpdate(DicomTag.ContinuityOfContent, "SEPARATE");
+
+            // Concept Name
             ct.Add(new DicomSequence(
                 DicomTag.ConceptNameCodeSequence,
-                NewCodeItem("113701", "DCM", "CT Irradiation Event Data")));
+                NewCodeItem("113819", "DCM", "CT Irradiation Event Data")));
 
             ct.AddOrUpdate(DicomTag.IrradiationEventUID, DicomUID.Generate().UID);
 
-            // Acquisition Type = SPIRAL CT (113620, DCM)
+            // Acquisition Type: SPIRAL MODE (correct code)
             ct.Add(new DicomSequence(
                 CustomDicomTags.AcquisitionTypeCodeSequence,
-                NewCodeItem("113620", "DCM", "SPIRAL CT")));
+                NewCodeItem("113622", "DCM", "SPIRAL MODE")));
 
+            // Acquisition Plane
+            {
+                var acquisitionPlaneItem = new DicomDataset();
+                acquisitionPlaneItem.Add(new DicomSequence(
+                    DicomTag.ConceptNameCodeSequence,
+                    NewCodeItem("113622", "DCM", "Acquisition Plane")));
+                acquisitionPlaneItem.Add(new DicomSequence(
+                    DicomTag.ConceptCodeSequence,
+                    NewCodeItem("113622", "DCM", "Axial Plane")));
+                acquisitionPlaneItem.AddOrUpdate(DicomTag.ValueType, "CODE");
+                acquisitionPlaneItem.AddOrUpdate(DicomTag.RelationshipType, "HAS PROPERTIES");
+
+                ct.Add(new DicomSequence(DicomTag.ContentSequence, acquisitionPlaneItem));
+            }
+
+            // Numeric values (correct VR)
             ct.AddOrUpdate(DicomTag.KVP, kVp.ToString());
             ct.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
             ct.AddOrUpdate(DicomTag.ExposureTime, exposureTime.ToString());
-            ct.AddOrUpdate(DicomTag.CTDIvol, ctdivol.ToString());
-            ct.AddOrUpdate(CustomDicomTags.DLP, dlp.ToString());
 
-            // AEC indicator (Exposure Modulation Type)
+            ct.AddOrUpdate(DicomTag.CTDIvol, ctdivol);
+            ct.AddOrUpdate(CustomDicomTags.DLP, dlp);
+
+            // Phantom Type (32 cm)
             ct.Add(new DicomSequence(
-                DicomTag.ExposureModulationType,
-                NewCodeItem("OTH", "DCM", "OTHER")));
+                DicomTag.CTDIPhantomTypeCodeSequence,
+                NewCodeItem("113690", "DCM", "CTDI Phantom Type 32 cm")));
+
+            // Exposure Modulation Type (CS)
+            ct.AddOrUpdate(DicomTag.ExposureModulationType, "OTHER");
 
             return ct;
         }
@@ -197,14 +226,16 @@ namespace DicomHelper
         {
             var scout = new DicomDataset();
 
-            // ConceptNameCodeSequence: CT Irradiation Event Data (113701, DCM)
+            scout.AddOrUpdate(DicomTag.ValueType, "CONTAINER");
+            scout.AddOrUpdate(DicomTag.RelationshipType, "CONTAINS");
+            scout.AddOrUpdate(DicomTag.ContinuityOfContent, "SEPARATE");
+
             scout.Add(new DicomSequence(
                 DicomTag.ConceptNameCodeSequence,
-                NewCodeItem("113701", "DCM", "CT Irradiation Event Data")));
+                NewCodeItem("113819", "DCM", "CT Irradiation Event Data")));
 
             scout.AddOrUpdate(DicomTag.IrradiationEventUID, DicomUID.Generate().UID);
 
-            // Acquisition Type = LOCALIZER (113622, DCM)
             scout.Add(new DicomSequence(
                 CustomDicomTags.AcquisitionTypeCodeSequence,
                 NewCodeItem("113622", "DCM", "LOCALIZER")));
@@ -212,7 +243,7 @@ namespace DicomHelper
             scout.AddOrUpdate(DicomTag.KVP, kVp.ToString());
             scout.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
             scout.AddOrUpdate(DicomTag.ExposureTime, exposureTime.ToString());
-            scout.AddOrUpdate(CustomDicomTags.DAP, dap.ToString());
+            scout.AddOrUpdate(CustomDicomTags.DAP, dap);
 
             return scout;
         }
