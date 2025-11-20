@@ -12,10 +12,12 @@ namespace DicomHelper
         const string RDSRInofPath = @"D:\TTT\RDSR.json";
         static void Main()
         {
+            string sampleId = DateTime.UtcNow.ToString("HHmmss");
+
             var rdsrBuilder = new RDSRBuilder();
             // - patient
-            rdsrBuilder.PatientInfo.Name = "Gildong^Hong";
-            rdsrBuilder.PatientInfo.ID = "12345";
+            rdsrBuilder.PatientInfo.Name = string.Format(@"Patient^{0}", sampleId);
+            rdsrBuilder.PatientInfo.ID = sampleId;
             rdsrBuilder.PatientInfo.Age = 21;
             rdsrBuilder.PatientInfo.Gender = "M";
             rdsrBuilder.PatientInfo.BirthDate = "19971013";
@@ -45,7 +47,7 @@ namespace DicomHelper
             // Save to file
             var file = new DicomFile(ds);
 
-            file.Save(string.Format(@"D:\TTT\RDSR_{0}.dcm", DateTime.UtcNow.ToString("HHmmss")));
+            file.Save(string.Format(@"D:\TTT\RDSR_{0}.dcm", sampleId));
         }
     }
 }
