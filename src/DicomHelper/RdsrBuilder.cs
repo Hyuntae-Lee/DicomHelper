@@ -203,11 +203,9 @@ namespace DicomHelper
                 ct.Add(new DicomSequence(DicomTag.ContentSequence, acquisitionPlaneItem));
             }
 
-            // Numeric values (correct VR)
             ct.AddOrUpdate(DicomTag.KVP, kVp.ToString());
             ct.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
             ct.AddOrUpdate(DicomTag.ExposureTime, exposureTime.ToString());
-
             ct.AddOrUpdate(DicomTag.CTDIvol, ctdivol);
             ct.AddOrUpdate(CustomDicomTags.DLP, dlp);
 
