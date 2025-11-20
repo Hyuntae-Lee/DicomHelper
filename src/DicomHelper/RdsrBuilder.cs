@@ -65,11 +65,13 @@ namespace DicomHelper
             // ProtocolName including Pediatric
             if (PatientInfo.Pediatric)
             {
-                ds.AddOrUpdate(DicomTag.ProtocolName, "Pediatric {0} Low Dose", PatientInfo.TargetPart);
+                ds.AddOrUpdate(DicomTag.ProtocolName,
+                    string.Format("Pediatric {0} Low Dose", PatientInfo.TargetPart));
             }
             else
             {
-                ds.AddOrUpdate(DicomTag.ProtocolName, "Adult {1} Standard", PatientInfo.TargetPart);
+                ds.AddOrUpdate(DicomTag.ProtocolName,
+                    string.Format("Adult {0} Standard", PatientInfo.TargetPart));
             }
 
             // Contents

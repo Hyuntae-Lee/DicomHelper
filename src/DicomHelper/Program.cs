@@ -33,6 +33,7 @@ namespace DicomHelper
             rdsrBuilder.PatientInfo = patientInfo;
             rdsrBuilder.ProductInfo = productInfo;
             rdsrBuilder.DoseInfo = doseInfo;
+            rdsrBuilder.StudyInfo = studyInfo;
             rdsrBuilder.IrrEventList.AddRange(irrEventList);
 
             // build data set
