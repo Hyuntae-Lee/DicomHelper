@@ -96,7 +96,7 @@ namespace DicomHelper
             {
                 var irrEvent = NewContainer("113820", "DCM", "Irradiation Event");
 
-                var scout = NewIrradiationEventScout(50, 100, 500, 250, 30);
+                var scout = NewIrradiationEventScout(50, 100, 500, 30);
                 var ct1 = NewIrradiationEventCT(50, 100, 500, 250, 30);
                 var ct2 = NewIrradiationEventCT(50, 100, 500, 250, 30);
 
@@ -193,7 +193,7 @@ namespace DicomHelper
             return ct;
         }
 
-        DicomDataset NewIrradiationEventScout(double kVp, double mA, double exposureTime, double ctdivol, double dlp)
+        DicomDataset NewIrradiationEventScout(double kVp, double mA, double exposureTime, double dap)
         {
             var scout = new DicomDataset();
 
@@ -212,8 +212,7 @@ namespace DicomHelper
             scout.AddOrUpdate(DicomTag.KVP, kVp.ToString());
             scout.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
             scout.AddOrUpdate(DicomTag.ExposureTime, exposureTime.ToString());
-            scout.AddOrUpdate(DicomTag.CTDIvol, ctdivol.ToString());
-            scout.AddOrUpdate(CustomDicomTags.DLP, dlp.ToString());
+            scout.AddOrUpdate(CustomDicomTags.DAP, dap.ToString());
 
             return scout;
         }
