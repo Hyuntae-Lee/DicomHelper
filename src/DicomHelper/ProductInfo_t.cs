@@ -15,8 +15,5 @@ namespace DicomHelper
         public string StationName { set; get; }
         public string DeviceSerialNumber { set; get; }
         public string SoftwareVersion { set; get; }
-        public string SOPInstanceUID { set; get; }
-        public string StudyInstanceUID { set; get; }
-        public string SeriesInstanceUID { set; get; }
     }
 }

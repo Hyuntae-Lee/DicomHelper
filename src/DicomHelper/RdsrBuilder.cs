@@ -23,14 +23,17 @@ namespace DicomHelper
         private PatientInfo_t _patientInfo;
         public ProductInfo_t ProductInfo { get { return _productInfo; } }
         private ProductInfo_t _productInfo;
-        public DoseInfo_t DoseInfo { get { return _doseInfo_t; } }
-        private DoseInfo_t _doseInfo_t;
+        public DoseInfo_t DoseInfo { get { return _doseInfo; } }
+        private DoseInfo_t _doseInfo;
+        public StudyInfo_t StudyInfo { get { return _studyInfo_t; } }
+        private StudyInfo_t _studyInfo_t;
 
         public RDSRBuilder()
         {
             _patientInfo = new PatientInfo_t();
             _productInfo = new ProductInfo_t();
-            _doseInfo_t = new DoseInfo_t();
+            _doseInfo = new DoseInfo_t();
+            _studyInfo_t = new StudyInfo_t();
         }
 
         public DicomDataset BuildRDSR()
@@ -40,13 +43,15 @@ namespace DicomHelper
             // Header
             // - Common
             ds.Add(DicomTag.SOPClassUID, DicomUID.XRayRadiationDoseSRStorage.UID);
-            ds.Add(DicomTag.SOPInstanceUID, ProductInfo.SOPInstanceUID);
-            ds.Add(DicomTag.StudyInstanceUID, ProductInfo.StudyInstanceUID);
-            ds.Add(DicomTag.SeriesInstanceUID, ProductInfo.SeriesInstanceUID);
+            ds.Add(DicomTag.SOPInstanceUID, StudyInfo.SOPInstanceUID);
+            ds.Add(DicomTag.StudyInstanceUID, StudyInfo.StudyInstanceUID);
+            ds.Add(DicomTag.SeriesInstanceUID, StudyInfo.SeriesInstanceUID);
             ds.Add(DicomTag.Modality, "SR");
             ds.Add(DicomTag.InstanceCreationDate, DateTime.UtcNow.ToString("yyyyMMdd")); // by current
             ds.Add(DicomTag.InstanceCreationTime, DateTime.UtcNow.ToString("HHmmss")); // by current
-            //"ISO_IR 192"
+            ds.Add(DicomTag.SpecificCharacterSet, StudyInfo.SpecificCharacterSet);
+            ds.Add(DicomTag.SeriesNumber, StudyInfo.SeriesNumber);
+            ds.Add(DicomTag.InstanceNumber, StudyInfo.InstanceNumber);
             // - Patient
             ds.Add(DicomTag.PatientName, PatientInfo.Name);
             ds.Add(DicomTag.PatientID, PatientInfo.ID);
@@ -61,15 +66,16 @@ namespace DicomHelper
             ds.Add(DicomTag.StationName, ProductInfo.StationName);
             ds.Add(DicomTag.DeviceSerialNumber, ProductInfo.DeviceSerialNumber);
             ds.Add(DicomTag.SoftwareVersions, ProductInfo.SoftwareVersion);
-            
+            ds.Add(DicomTag.StudyDescription, string.Format("CT {0} Routine", PatientInfo.TargetPart));
+
             // ProtocolName including Pediatric
             if (PatientInfo.Pediatric)
             {
-                ds.AddOrUpdate(DicomTag.ProtocolName, "Pediatric Chest Low Dose");
+                ds.AddOrUpdate(DicomTag.ProtocolName, "Pediatric {0} Low Dose", PatientInfo.TargetPart);
             }
             else
             {
-                ds.AddOrUpdate(DicomTag.ProtocolName, "Adult Abdomen Standard");
+                ds.AddOrUpdate(DicomTag.ProtocolName, "Adult {1} Standard", PatientInfo.TargetPart);
             }
 
             // Contents

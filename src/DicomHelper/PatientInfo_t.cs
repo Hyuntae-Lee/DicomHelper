@@ -14,5 +14,6 @@ namespace DicomHelper
         public string Gender { set; get; }
         public string BirthDate { set; get; }
         public bool Pediatric { set; get; }
+        public string TargetPart { set; get; }
     }
 }

@@ -21,6 +21,7 @@ namespace DicomHelper
             rdsrBuilder.PatientInfo.Age = 21;
             rdsrBuilder.PatientInfo.Gender = "M";
             rdsrBuilder.PatientInfo.BirthDate = "19971013";
+            rdsrBuilder.PatientInfo.TargetPart = "Chest";
             rdsrBuilder.PatientInfo.Pediatric = false;
             // - product
             rdsrBuilder.ProductInfo.Manufacturer = "vatech";
@@ -30,9 +31,16 @@ namespace DicomHelper
             rdsrBuilder.ProductInfo.StationName = "Smart M Plus";
             rdsrBuilder.ProductInfo.DeviceSerialNumber = "SN111112222";
             rdsrBuilder.ProductInfo.SoftwareVersion = "1.0.0.0";
-            rdsrBuilder.ProductInfo.SOPInstanceUID = "1.2.410.200028.20261119121212.1";
-            rdsrBuilder.ProductInfo.StudyInstanceUID = "1.2.410.200028.20261119121212.1.1";
-            rdsrBuilder.ProductInfo.SeriesInstanceUID = "1.2.410.200028.20261119121212.1.1.1";
+            rdsrBuilder.StudyInfo.SOPInstanceUID = "1.2.410.200028.20261119121212.1";
+            rdsrBuilder.StudyInfo.StudyInstanceUID = "1.2.410.200028.20261119121212.1.1";
+            rdsrBuilder.StudyInfo.SeriesInstanceUID = "1.2.410.200028.20261119121212.1.1.1";
+            rdsrBuilder.StudyInfo.SpecificCharacterSet = "ISO_IR 192";
+            rdsrBuilder.StudyInfo.SeriesNumber = "1";
+            rdsrBuilder.StudyInfo.InstanceNumber = "1";
+            rdsrBuilder.StudyInfo.StudyDate = "19970302";
+            rdsrBuilder.StudyInfo.StudyTime = "163759";
+            rdsrBuilder.StudyInfo.AccessionNumber = "A-0001";
+
             // - dose
             rdsrBuilder.DoseInfo.AccCTDIvol = 150.0;
             rdsrBuilder.DoseInfo.AccDLP = 10.0;
