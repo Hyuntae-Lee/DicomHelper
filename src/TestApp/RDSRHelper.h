@@ -45,6 +45,11 @@ public:
 	void putDLPUnit(wstring value);
 	void putCTDIvolUnit(wstring value);
 	void putAccumulatedDose(double dlp, double ctdiVol);
+	void putAECEnabled(bool value);
+	void putCTDIAlertEnabled(bool value);
+	void putCTDINotificationEnabled(bool value);
+	void putDLPAlertEnabled(bool value);
+	void putDLPNotificationEnabled(bool value);
 	
 	void addIrradiationEventScout(double kVp, double mA, double exposureTime, double dap);
 	void addIrradiationEventCT(double kVp, double mA, double exposureTime, double dlp, double ctdiVol);

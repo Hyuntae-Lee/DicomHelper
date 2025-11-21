@@ -111,41 +111,62 @@ namespace DicomHelper
                 var doseCheckContainer = NewContainer("113900", "DCM", "Dose Check Alert Details");
                 var doseCheckChildren = new List<DicomDataset>();
 
-                bool dlpAlertConfigured = !double.IsNaN(DoseInfo.DLPAlertThreshold);
-                bool ctDiAlertConfigured = !double.IsNaN(DoseInfo.CTDIAlertThreshold);
-                bool dlpNotiConfigured = !double.IsNaN(DoseInfo.DLPNotificationThreshold);
-                bool ctDiNotiConfigured = !double.IsNaN(DoseInfo.CTDINotificationThreshold);
-
                 //
-                doseCheckChildren.Add(NewCodeItemContent("113901", "DCM", "DLP Alert Value Configured", dlpAlertConfigured ? "373066001" : "373067005", "SCT", dlpAlertConfigured ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(NewCodeItemContent("113902", "DCM", "CTDIvol Alert Value Configured", ctDiAlertConfigured ? "373066001" : "373067005", "SCT", ctDiAlertConfigured ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113901", "DCM", "DLP Alert Value Configured",
+                    DoseInfo.DLPAlertEnabled ? "373066001" : "373067005", "SCT",
+                    DoseInfo.DLPAlertEnabled ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113902", "DCM", "CTDIvol Alert Value Configured",
+                    DoseInfo.CTDIAlertEnabled ? "373066001" : "373067005", "SCT",
+                    DoseInfo.CTDIAlertEnabled ? "Yes" : "No", "CONTAINS"));
 
                 // Add numeric alert values if configured
-                if (dlpAlertConfigured)
-                    doseCheckChildren.Add(NewNumericItem("113903", "DCM", "DLP Alert Value", DoseInfo.DLPAlertThreshold, "mGy.cm", "UCUM", "mGy.cm", "CONTAINS"));
-                if (ctDiAlertConfigured)
-                    doseCheckChildren.Add(NewNumericItem("113904", "DCM", "CTDIvol Alert Value", DoseInfo.CTDIAlertThreshold, "mGy", "UCUM", "mGy", "CONTAINS"));
+                if (DoseInfo.DLPAlertEnabled)
+                {
+                    doseCheckChildren.Add(NewNumericItem("113903", "DCM", "DLP Alert Value",
+                        DoseInfo.DLPAlertThreshold, "mGy.cm", "UCUM", "mGy.cm", "CONTAINS"));
+                }
+
+                if (DoseInfo.CTDIAlertEnabled)
+                {
+                    doseCheckChildren.Add(NewNumericItem("113904", "DCM", "CTDIvol Alert Value",
+                        DoseInfo.CTDIAlertThreshold, "mGy", "UCUM", "mGy", "CONTAINS"));
+                }
 
                 // Indicate whether notification values are configured (TID 10015 also expects Notification items)
-                doseCheckChildren.Add(NewCodeItemContent("113911", "DCM", "DLP Notification Value Configured", dlpNotiConfigured ? "373066001" : "373067005", "SCT", dlpNotiConfigured ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(NewCodeItemContent("113912", "DCM", "CTDIvol Notification Value Configured", ctDiNotiConfigured ? "373066001" : "373067005", "SCT", ctDiNotiConfigured ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113911", "DCM", "DLP Notification Value Configured",
+                    DoseInfo.DLPNotificationEnabled ? "373066001" : "373067005", "SCT",
+                    DoseInfo.DLPNotificationEnabled ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113912", "DCM", "CTDIvol Notification Value Configured",
+                    DoseInfo.CTDINotificationEnabled ? "373066001" : "373067005", "SCT",
+                    DoseInfo.CTDINotificationEnabled ? "Yes" : "No", "CONTAINS"));
 
-                if (dlpNotiConfigured)
-                    doseCheckChildren.Add(NewNumericItem("113913", "DCM", "DLP Notification Value", DoseInfo.DLPNotificationThreshold, "mGy.cm", "UCUM", "mGy.cm", "CONTAINS"));
-                if (ctDiNotiConfigured)
-                    doseCheckChildren.Add(NewNumericItem("113914", "DCM", "CTDIvol Notification Value", DoseInfo.CTDINotificationThreshold, "mGy", "UCUM", "mGy", "CONTAINS"));
+                if (DoseInfo.DLPNotificationEnabled)
+                {
+                    doseCheckChildren.Add(NewNumericItem("113913", "DCM", "DLP Notification Value",
+                        DoseInfo.DLPNotificationThreshold, "mGy.cm", "UCUM", "mGy.cm", "CONTAINS"));
+                }
+                    
+                if (DoseInfo.CTDINotificationEnabled)
+                {
+                    doseCheckChildren.Add(NewNumericItem("113914", "DCM", "CTDIvol Notification Value",
+                        DoseInfo.CTDINotificationThreshold, "mGy", "UCUM", "mGy", "CONTAINS"));
+                }
 
                 // Now record whether forward estimates exceed Notification or Alert values
-                bool triggeredDlpNotification = dlpNotiConfigured && DoseInfo.AccDLP > DoseInfo.DLPNotificationThreshold;
-                bool triggeredCtDiNotification = ctDiNotiConfigured && DoseInfo.AccCTDIvol > DoseInfo.CTDINotificationThreshold;
-                bool triggeredDlpAlert = dlpAlertConfigured && DoseInfo.AccDLP > DoseInfo.DLPAlertThreshold;
-                bool triggeredCtDiAlert = ctDiAlertConfigured && DoseInfo.AccCTDIvol > DoseInfo.CTDIAlertThreshold;
+                bool triggeredDlpNotification = DoseInfo.DLPNotificationEnabled && DoseInfo.AccDLP > DoseInfo.DLPNotificationThreshold;
+                bool triggeredCtDiNotification = DoseInfo.CTDINotificationEnabled && DoseInfo.AccCTDIvol > DoseInfo.CTDINotificationThreshold;
+                bool triggeredDlpAlert = DoseInfo.DLPAlertEnabled && DoseInfo.AccDLP > DoseInfo.DLPAlertThreshold;
+                bool triggeredCtDiAlert = DoseInfo.CTDIAlertEnabled && DoseInfo.AccCTDIvol > DoseInfo.CTDIAlertThreshold;
 
                 // Add CODE items for triggered/not triggered (Yes/No)
-                doseCheckChildren.Add(NewCodeItemContent("113920", "DCM", "DLP Notification Exceeded", "373066001", "SCT", triggeredDlpNotification ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(NewCodeItemContent("113921", "DCM", "CTDIvol Notification Exceeded", "373066001", "SCT", triggeredCtDiNotification ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(NewCodeItemContent("113922", "DCM", "DLP Alert Exceeded", "373066001", "SCT", triggeredDlpAlert ? "Yes" : "No", "CONTAINS"));
-                doseCheckChildren.Add(NewCodeItemContent("113923", "DCM", "CTDIvol Alert Exceeded", "373066001", "SCT", triggeredCtDiAlert ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113920", "DCM", "DLP Notification Exceeded", "373066001", "SCT",
+                    triggeredDlpNotification ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113921", "DCM", "CTDIvol Notification Exceeded", "373066001", "SCT",
+                    triggeredCtDiNotification ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113922", "DCM", "DLP Alert Exceeded", "373066001", "SCT",
+                    triggeredDlpAlert ? "Yes" : "No", "CONTAINS"));
+                doseCheckChildren.Add(NewCodeItemContent("113923", "DCM", "CTDIvol Alert Exceeded", "373066001", "SCT",
+                    triggeredCtDiAlert ? "Yes" : "No", "CONTAINS"));
 
                 doseCheckContainer.Add(new DicomSequence(DicomTag.ContentSequence, doseCheckChildren.ToArray()));
                 rootContentItems.Add(doseCheckContainer);
@@ -153,7 +174,7 @@ namespace DicomHelper
             // 4) AEC
             {
                 var aecItem = NewAECContainer(
-                    aecEnabled: true,
+                    aecEnabled: DoseInfo.AECEnabled,
                     aecModeDescription: "Scout-based tube current estimation: single frontal scout, lookup table -> recommended mA."
                 );
 

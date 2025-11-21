@@ -114,6 +114,11 @@ namespace DicomHelper
             doseInfo.CTDINotificationThreshold = json["CTDINotificationThreshold"].GetValue<double>();
             doseInfo.DLPUnit = json["DLPUnit"].GetValue<string>();
             doseInfo.CTDIlvolUnit = json["CTDIvolUnit"].GetValue<string>();
+            doseInfo.AECEnabled = json["AECEnabled"].GetValue<bool>();
+            doseInfo.CTDIAlertEnabled = json["CTDIAlertEnabled"].GetValue<bool>();
+            doseInfo.CTDINotificationEnabled = json["CTDINotificationEnabled"].GetValue<bool>();
+            doseInfo.DLPAlertEnabled = json["DLPAlertEnabled"].GetValue<bool>();
+            doseInfo.DLPNotificationEnabled = json["DLPNotificationEnabled"].GetValue<bool>();
 
             return true;
         }

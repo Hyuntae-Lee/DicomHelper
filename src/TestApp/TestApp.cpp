@@ -38,6 +38,11 @@ int main()
     builder.putCTDIAlertThreshold(10.0);
     builder.putDLPNotificationThreshold(10.0);
     builder.putCTDINotificationThreshold(10.0);
+    builder.putAECEnabled(true);
+    builder.putCTDIAlertEnabled(true);
+    builder.putCTDINotificationEnabled(true);
+    builder.putDLPAlertEnabled(false);
+    builder.putDLPNotificationEnabled(false);
     builder.putDLPUnit(L"mGy.cm");
     builder.putCTDIvolUnit(L"mGy");
     builder.putAccumulatedDose(350.0, 10.5);

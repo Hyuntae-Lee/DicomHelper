@@ -9,10 +9,17 @@ namespace DicomHelper
 {
     class Program
     {
-        const string RDSRInfoPath = @"D:\Projects\Utilities\DicomHelper\git\src\SampleData\RDSR.json";
-
-        static void Main()
+        static void Main(string[] args)
         {
+            if (args.Count() != 2)
+            {
+                return;
+            }
+
+            var jsonPath = args[0];
+            var dcmPath = args[1];
+
+            //
             PatientInfo_t patientInfo = new PatientInfo_t();
             ProductInfo_t productInfo = new ProductInfo_t();
             DoseInfo_t doseInfo = new DoseInfo_t();
@@ -20,8 +27,8 @@ namespace DicomHelper
             List<IrradiationEvents_t> irrEventList = new List<IrradiationEvents_t>();
 
             // get input
-            if (!InputParser.ParseInput(ref patientInfo, ref productInfo, ref doseInfo, ref studyInfo, ref irrEventList,
-                RDSRInfoPath))
+            if (!InputParser.ParseInput(ref patientInfo, ref productInfo, ref doseInfo,
+                ref studyInfo, ref irrEventList, jsonPath))
             {
                 return;
             }
@@ -41,7 +48,7 @@ namespace DicomHelper
 
             // save to file
             var file = new DicomFile(ds);
-            file.Save(@"D:\TTT\RDSR_T.dcm");
+            file.Save(dcmPath);
         }
     }
 }

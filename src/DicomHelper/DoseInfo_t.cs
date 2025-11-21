@@ -16,5 +16,10 @@ namespace DicomHelper
         public double DLPAlertThreshold { set; get; }
         public double CTDINotificationThreshold { set; get; }
         public double CTDIAlertThreshold { set; get; }
+        public bool AECEnabled { set; get; }
+        public bool CTDIAlertEnabled { set; get; }
+        public bool CTDINotificationEnabled { set; get; }
+        public bool DLPAlertEnabled { set; get; }
+        public bool DLPNotificationEnabled { set; get; }
     }
 }

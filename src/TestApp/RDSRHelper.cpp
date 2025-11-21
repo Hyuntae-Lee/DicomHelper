@@ -69,7 +69,7 @@ void RDSRHelper::putTargetPart(wstring value)
 
 void RDSRHelper::putPediatric(bool value)
 {
-	m_jsonHeader[U("Pediatric")] = value;
+	m_jsonHeader[U("Pediatric")] = web::json::value::boolean(value);
 }
 
 void RDSRHelper::putManufacturer(wstring value)
@@ -186,6 +186,31 @@ void RDSRHelper::putAccumulatedDose(double dlp, double ctdiVol)
 {
 	m_jsonAccumulatedDose[U("DLP")] = dlp;
 	m_jsonAccumulatedDose[U("CTDIvol")] = ctdiVol;
+}
+
+void RDSRHelper::putAECEnabled(bool value)
+{
+	m_jsonSettings[U("AECEnabled")] = web::json::value::boolean(value);
+}
+
+void RDSRHelper::putCTDIAlertEnabled(bool value)
+{
+	m_jsonSettings[U("CTDIAlertEnabled")] = web::json::value::boolean(value);
+}
+
+void RDSRHelper::putCTDINotificationEnabled(bool value)
+{
+	m_jsonSettings[U("CTDINotificationEnabled")] = web::json::value::boolean(value);
+}
+
+void RDSRHelper::putDLPAlertEnabled(bool value)
+{
+	m_jsonSettings[U("DLPAlertEnabled")] = web::json::value::boolean(value);
+}
+
+void RDSRHelper::putDLPNotificationEnabled(bool value)
+{
+	m_jsonSettings[U("DLPNotificationEnabled")] = web::json::value::boolean(value);
 }
 
 void RDSRHelper::addIrradiationEventScout(double kVp, double mA, double exposureTime, double dap)
