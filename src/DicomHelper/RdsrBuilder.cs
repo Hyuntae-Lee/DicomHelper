@@ -176,12 +176,17 @@ namespace DicomHelper
             ct.AddOrUpdate(DicomTag.RelationshipType, "CONTAINS");
             ct.AddOrUpdate(DicomTag.ContinuityOfContent, "SEPARATE");
 
-            // Concept Name
-            ct.Add(new DicomSequence(
-                DicomTag.ConceptNameCodeSequence,
-                NewCodeItem("113819", "DCM", "CT Irradiation Event Data")));
+            //
+            ct.Add(NewConceptNameCodeSequence("113819", "DCM", "CT Irradiation Event Data"));
 
+            //
             ct.AddOrUpdate(DicomTag.IrradiationEventUID, DicomUID.Generate().UID);
+
+            ct.AddOrUpdate(DicomTag.KVP, kVp.ToString());
+            ct.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
+            ct.AddOrUpdate(DicomTag.ExposureTime, exposureTime.ToString());
+            ct.AddOrUpdate(DicomTag.CTDIvol, ctdivol);
+            ct.AddOrUpdate(CustomDicomTags.DLP, dlp);
 
             // Acquisition Type: SPIRAL MODE (correct code)
             ct.Add(new DicomSequence(
@@ -189,25 +194,8 @@ namespace DicomHelper
                 NewCodeItem("113622", "DCM", "SPIRAL MODE")));
 
             // Acquisition Plane
-            {
-                var acquisitionPlaneItem = new DicomDataset();
-                acquisitionPlaneItem.Add(new DicomSequence(
-                    DicomTag.ConceptNameCodeSequence,
-                    NewCodeItem("113622", "DCM", "Acquisition Plane")));
-                acquisitionPlaneItem.Add(new DicomSequence(
-                    DicomTag.ConceptCodeSequence,
-                    NewCodeItem("113622", "DCM", "Axial Plane")));
-                acquisitionPlaneItem.AddOrUpdate(DicomTag.ValueType, "CODE");
-                acquisitionPlaneItem.AddOrUpdate(DicomTag.RelationshipType, "HAS PROPERTIES");
-
-                ct.Add(new DicomSequence(DicomTag.ContentSequence, acquisitionPlaneItem));
-            }
-
-            ct.AddOrUpdate(DicomTag.KVP, kVp.ToString());
-            ct.AddOrUpdate(DicomTag.XRayTubeCurrent, mA.ToString());
-            ct.AddOrUpdate(DicomTag.ExposureTime, exposureTime.ToString());
-            ct.AddOrUpdate(DicomTag.CTDIvol, ctdivol);
-            ct.AddOrUpdate(CustomDicomTags.DLP, dlp);
+            ct.Add(new DicomSequence(DicomTag.ContentSequence,
+                NewCodeItemContent("113622", "DCM", "Acquisition Plane", "113622", "DCM", "Axial Plane", "HAS CONCEPT MOD")));
 
             // Phantom Type (32 cm)
             ct.Add(new DicomSequence(
@@ -228,9 +216,7 @@ namespace DicomHelper
             scout.AddOrUpdate(DicomTag.RelationshipType, "CONTAINS");
             scout.AddOrUpdate(DicomTag.ContinuityOfContent, "SEPARATE");
 
-            scout.Add(new DicomSequence(
-                DicomTag.ConceptNameCodeSequence,
-                NewCodeItem("113819", "DCM", "CT Irradiation Event Data")));
+            scout.Add(NewConceptNameCodeSequence("113819", "DCM", "CT Irradiation Event Data"));
 
             scout.AddOrUpdate(DicomTag.IrradiationEventUID, DicomUID.Generate().UID);
 
@@ -307,8 +293,8 @@ namespace DicomHelper
         {
             var item = new DicomDataset();
             item.Add(DicomTag.ValueType, "CODE");
-            item.Add(NewConceptNameCodeSequence(nameCodeValue, nameScheme, nameMeaning));
             item.Add(DicomTag.RelationshipType, relationshipType);
+            item.Add(NewConceptNameCodeSequence(nameCodeValue, nameScheme, nameMeaning));
 
             var seq = new DicomSequence(DicomTag.ConceptCodeSequence, NewCodeItem(valueCodeValue, valueScheme, valueMeaning));
             item.Add(seq);
